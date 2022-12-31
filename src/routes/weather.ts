@@ -29,7 +29,9 @@ export type WeatherAtTime = {
 };
 
 export type FullWeatherData = WeatherAtTime & {
-	prev_rainfal: RainfallRate[];
+	weather: WeatherDatum & {
+		prev_rainfall: RainfallRate[];
+	};
 	score: number;
 };
 
@@ -100,7 +102,7 @@ export const fetchWeatherData = async (params: {
 			time,
 			weather: {
 				...weather,
-				prev_rainfal: weatherValues
+				prev_rainfall: weatherValues
 					.slice(ind - 3, ind)
 					.map((v) => v?.rain)
 					.reverse()

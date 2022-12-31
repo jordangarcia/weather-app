@@ -2,7 +2,7 @@
 	import { round } from 'lodash';
 	import { DateTime } from 'luxon';
 	import type { PageData } from './$types';
-	import { rainToMMPerHour, tempCtoF, windToMPH } from './helpers';
+	import { rainToMMPerHour, score, tempCtoF, windToMPH } from './helpers';
 	import type { FullWeatherData } from './weather';
 
 	export let data: PageData;
@@ -79,7 +79,7 @@
 						<tr>
 							{#each item.forecast.filter(filterByDateSelected) as f}
 								<td class="border border-slate-600  p-2">
-									<div class="flex flex-col w-20">
+									<div class="flex flex-col w-24">
 										<div class="flex flex-row justify-between">
 											<span> 🌡 </span>
 											{round(tempCtoF(f.weather.Tair), 0)}f
@@ -92,6 +92,12 @@
 											<span> 🌧 </span>
 											{round(rainToMMPerHour(f.weather.rain), 2)}mm/h
 										</div>
+										<!-- <div class="flex flex-row justify-between">
+											<pre class="text-xs">
+
+											{JSON.stringify(score(f), null, ' ')}
+                      </pre>
+										</div> -->
 									</div>
 								</td>
 							{/each}
