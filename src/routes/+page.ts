@@ -5,7 +5,7 @@ import type { PageLoad } from './$types'
 import { LOCATIONS } from '../locationData'
 
 export const load = (async ({ params }) => {
-  const today = DateTime.now().minus({ days: 13 })
+  const today = DateTime.now()
   const now = today.minus({ days: 3 }).startOf('day').minus({ hours: 3 })
   const end = now.plus({ days: 7 }).endOf('day')
   const timeParams = {

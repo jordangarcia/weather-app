@@ -1,5 +1,3 @@
-import koolani from '$lib/images/koolani.jpeg'
-
 export type Location = {
   id: string
   latitude: string
@@ -39,5 +37,10 @@ export const LOCATIONS: Location[] = [
     id: 'kailua district park',
     latitude: '21.394745',
     longitude: '-157.738063',
+  },
+  {
+    id: 'kalakaua district park',
+    latitude: '21.32696557039398',
+    longitude: '-157.8768696893912',
   },
 ]
