@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import { computeScores } from './helpers';
 
 type Timestamp = number;
 type MetersPerSecond = number;
@@ -27,12 +28,22 @@ export type WeatherAtTime = {
 	time: ISOTimeString;
 	weather: WeatherDatum;
 };
+export type WeatherAtTimeWithPrevRainfall = WeatherDatum & {
+	prev_rainfall: RainfallRate[];
+};
+
+export type Score = 4 | 3 | 2 | 1 | 0;
+export type WeatherScores = {
+	wind_score: Score;
+	temp_score: Score;
+	rain_score: Score;
+	prev_rainfall_score: Score;
+	overall_score: Score;
+};
 
 export type FullWeatherData = WeatherAtTime & {
-	weather: WeatherDatum & {
-		prev_rainfall: RainfallRate[];
-	};
-	score: number;
+	weather: WeatherAtTimeWithPrevRainfall;
+	scores: WeatherScores;
 };
 
 export const getUrl = (params: {
@@ -46,7 +57,7 @@ export const getUrl = (params: {
 		format: 'json',
 		dataset: 'weather_forecast_wrf_oa',
 		vectors: 'Uwind:Vwind:wind:from',
-		...params
+		...params,
 	});
 	p.append('var', 'Uwind');
 	p.append('var', 'Vwind');
@@ -68,7 +79,7 @@ export const fetchWeatherData = async (params: {
 		format: 'json',
 		dataset: 'weather_forecast_wrf_oa',
 		vectors: 'Uwind:Vwind:wind:from',
-		...params
+		...params,
 	});
 	p.append('var', 'Uwind');
 	p.append('var', 'Vwind');
@@ -98,16 +109,17 @@ export const fetchWeatherData = async (params: {
 
 	const weatherValues = Object.values(weather);
 	const fullWeatherData = Object.entries(weather).map(([time, weather], ind) => {
+		const weatherData = {
+			...weather,
+			prev_rainfall: weatherValues
+				.slice(ind - 3, ind)
+				.map((v) => v?.rain)
+				.reverse(),
+		};
 		return {
 			time,
-			weather: {
-				...weather,
-				prev_rainfall: weatherValues
-					.slice(ind - 3, ind)
-					.map((v) => v?.rain)
-					.reverse()
-			},
-			score: 0
+			weather: weatherData,
+			scores: computeScores(weatherData),
 		};
 	});
 

@@ -1,5 +1,5 @@
-import { overArgs } from 'lodash';
-import type { FullWeatherData } from './weather';
+import { round } from 'lodash';
+import type { Score, WeatherAtTimeWithPrevRainfall } from './weather';
 
 export const tempCtoF = (temp: number) => {
 	return (temp * 9) / 5 + 32;
@@ -19,16 +19,16 @@ export const rainToMMPerHour = (rain: number) => {
 	return rain * 3600;
 };
 
-const formatWeather = (item: FullWeatherData) => {
+const formatWeather = (item: WeatherAtTimeWithPrevRainfall) => {
 	return {
-		wind: windToMPH(item.weather.wind),
-		rain: rainToMMPerHour(item.weather.rain),
-		temp: tempCtoF(item.weather.Tair),
-		prev_rainfall: item.weather.prev_rainfall.map(rainToMMPerHour)
+		wind: windToMPH(item.wind),
+		rain: rainToMMPerHour(item.rain),
+		temp: tempCtoF(item.Tair),
+		prev_rainfall: item.prev_rainfall.map(rainToMMPerHour),
 	};
 };
 
-const tempScore = (temp: number) => {
+const tempScore = (temp: number): Score => {
 	// temp_score
 	// 65-82 F = 4
 	// 60-65, 83-88 F = 3
@@ -44,19 +44,18 @@ const tempScore = (temp: number) => {
 		[83, 89, 3],
 		[89, 95, 2],
 		[95, 102, 1],
-		[102, Infinity, 0]
+		[102, Infinity, 0],
 	];
 	const found = ranges.find(([min, max]) => temp >= min && temp <= max);
 
 	if (!found) {
-		throw new Error(`not found for ${temp}`);
 		return 0;
 	}
 
-	return found[2];
+	return found[2] as Score;
 };
 
-const rainfallScore = (rain: number) => {
+const rainfallScore = (rain: number): Score => {
 	// rain_score
 	// 0-0.1 in/h = 4
 	// 0.1-0.3 in/h = 3
@@ -66,18 +65,11 @@ const rainfallScore = (rain: number) => {
 	// medium (0.1-0.3 in/h) (2.5-7.6 mm/h),
 	// heavy (> 0.3 in/h) (> 7.6 mm/h), or
 	// violent (> 2.0 in/h) (> 50 mm/h)
-	return rainToMMPerHour(rain) < 0.5
-		? 4
-		: rainToMMPerHour(rain) < 1
-		? 3
-		: rainToMMPerHour(rain) < 2.5
-		? 2
-		: rainToMMPerHour(rain) < 7.5
-		? 1
-		: 0;
+	const score = rain < 0.1 ? 4 : rain < 0.5 ? 3 : rain < 2.5 ? 2 : rain < 7.5 ? 1 : 0;
+	return score;
 };
 
-const windScore = (wind: number) => {
+const windScore = (wind: number): Score => {
 	// wind_score
 	// 0-8 mph = 4
 	// 8-12 mph = 3
@@ -86,8 +78,23 @@ const windScore = (wind: number) => {
 	// 30+ mph = 0
 	return wind < 8 ? 4 : wind < 12 ? 3 : wind < 16 ? 2 : wind < 30 ? 1 : 0;
 };
+const computeOverallScore = (scores: {
+	wind_score: Score;
+	temp_score: Score;
+	rain_score: Score;
+	prev_rainfall_score: Score;
+}): Score => {
+	const minScore = Math.min(...Object.values(scores));
+	if (minScore < 3) {
+		return minScore as Score;
+	}
+	return round(
+		(scores.wind_score + scores.temp_score + scores.rain_score + scores.prev_rainfall_score) / 4,
+		0
+	) as Score;
+};
 
-export const score = (item: FullWeatherData) => {
+export const computeScores = (item: WeatherAtTimeWithPrevRainfall) => {
 	const { wind, rain, temp, prev_rainfall } = formatWeather(item);
 
 	const wind_score = windScore(wind);
@@ -109,17 +116,44 @@ export const score = (item: FullWeatherData) => {
 			// rain=2 1 hours ago -> 2
 			// rain=1 1 hours ago -> 1
 			// rain=0 1 hours ago -> 0
-			const score = rainfallScore(rain);
+			const score = rainfallScore(rainfall);
 
 			// max at 4
-			return Math.min(4, score + ind);
+			return Math.min(
+				4,
+				score +
+					ind +
+					// if its not raining, assume in the hour prev rain can go up by 1
+					(rain === 4 ? 1 : 0)
+			);
 		})
-	);
+	) as Score;
+
+	const overall_score: Score = computeOverallScore({
+		wind_score,
+		temp_score,
+		rain_score,
+		prev_rainfall_score,
+	});
 
 	return {
 		wind_score,
 		temp_score,
 		rain_score,
-		prev_rainfall_score
+		prev_rainfall_score,
+		overall_score,
 	};
+};
+
+export const getGradientColor = (value: Score, opacity = 0.8) => {
+	const hue = 120 - 30 * (4 - value);
+	return `hsl(${hue}, 100%, 50%)`;
+};
+
+export const SCORE_MAP = {
+	4: '🤙',
+	3: '🟢',
+	2: '🟠',
+	1: '🔴',
+	0: '⛔️',
 };
