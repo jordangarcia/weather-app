@@ -20,8 +20,8 @@
 			<span> 🌧: </span>
 			{round(rainToMMPerHour(item.weather.rain), 2)}mm/h
 		</div>
-		<!-- <div class="flex flex-col overflow-auto">
+		<div class="flex flex-col overflow-auto">
 			<pre>{JSON.stringify(item, null, ' ')}</pre>
-		</div> -->
+		</div>
 	</div>
 </td>

@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { DateTime } from 'luxon';
+	import Header from '../../Header.svelte';
+	import type { FullWeatherData } from '../../weather';
 	import type { PageData } from './$types';
-	import Header from './Header.svelte';
-	import Location from './Location.svelte';
-	import type { FullWeatherData } from './weather';
+	import Location from '../../Location.svelte';
 
 	export let data: PageData;
 
+	let { location } = data;
 	let dateSelected: DateTime = data.today;
 
 	const START_HOUR = 7;
@@ -22,7 +23,7 @@
 
 <section>
 	<Header
-		forecast={data.weather[0].forecast}
+		forecast={location.forecast}
 		{dateSelected}
 		onPrevDay={() => {
 			dateSelected = dateSelected.plus({ days: -1 });
@@ -33,8 +34,6 @@
 	/>
 
 	<section class="content p-4">
-		{#each data.weather as location}
-			<Location name={location.id} forecast={location.forecast.filter(filterByDateSelected)} />
-		{/each}
+		<Location name={location.id} forecast={location.forecast.filter(filterByDateSelected)} />
 	</section>
 </section>

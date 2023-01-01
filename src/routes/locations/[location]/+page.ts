@@ -1,10 +1,17 @@
+import { error } from '@sveltejs/kit';
 import { DateTime } from 'luxon';
-import { fetchWeatherData, getUrl } from './weather';
 
+import { fetchWeatherData, getUrl } from '../../weather';
+import { LOCATIONS } from '../../../locationData';
 import type { PageLoad } from './$types';
-import { LOCATIONS } from '../locationData';
 
 export const load = (async ({ params }) => {
+	const loc = LOCATIONS.find((l) => l.id === params.location);
+	console.log('finding', params.location, loc);
+	if (!loc) {
+		throw error(404, 'Not found');
+	}
+
 	const today = DateTime.now().minus({ days: 11 });
 	const now = today.minus({ days: 3 }).startOf('day').minus({ hours: 3 });
 	const end = now.plus({ days: 7, hours: 3 });
@@ -14,21 +21,17 @@ export const load = (async ({ params }) => {
 		time_zone: 'UTC',
 	};
 
-	const locations = await Promise.all(
-		LOCATIONS.map(async (loc) => {
-			return {
-				...loc,
-				forecast: await fetchWeatherData({
-					...timeParams,
-					...loc,
-				}),
-				url: getUrl({ ...timeParams, ...loc }),
-			};
-		})
-	);
+	const location = {
+		...loc,
+		forecast: await fetchWeatherData({
+			...timeParams,
+			...loc,
+		}),
+		url: getUrl({ ...timeParams, ...loc }),
+	};
 
 	return {
-		weather: locations,
+		location,
 		today,
 	};
 }) satisfies PageLoad;

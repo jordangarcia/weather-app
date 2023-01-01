@@ -84,14 +84,7 @@ const computeOverallScore = (scores: {
 	rain_score: Score;
 	prev_rainfall_score: Score;
 }): Score => {
-	const minScore = Math.min(...Object.values(scores));
-	if (minScore < 3) {
-		return minScore as Score;
-	}
-	return round(
-		(scores.wind_score + scores.temp_score + scores.rain_score + scores.prev_rainfall_score) / 4,
-		0
-	) as Score;
+	return Math.min(...Object.values(scores)) as Score;
 };
 
 export const computeScores = (item: WeatherAtTimeWithPrevRainfall) => {
@@ -124,7 +117,7 @@ export const computeScores = (item: WeatherAtTimeWithPrevRainfall) => {
 				score +
 					ind +
 					// if its not raining, assume in the hour prev rain can go up by 1
-					(rain === 4 ? 1 : 0)
+					(rainfallScore(rain) === 4 ? 1 : 0)
 			);
 		})
 	) as Score;

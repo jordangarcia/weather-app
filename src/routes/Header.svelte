@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { DateTime } from 'luxon';
-	import type { PageData } from './$types';
+	import type { FullWeatherData } from './weather';
 
-	export let data: PageData;
+	export let forecast: FullWeatherData[];
 	export let onPrevDay: () => void;
 	export let onNextDay: () => void;
 	export let dateSelected: DateTime;
 
-	$: canGoPrev = data.weather[0].forecast.some(
+	$: canGoPrev = forecast.some(
 		(item) =>
 			DateTime.fromISO(item.time).toFormat('LLL dd') ===
 			dateSelected.plus({ days: -1 }).toFormat('LLL dd')
 	);
-	$: canGoNext = data.weather[0].forecast.some(
+	$: canGoNext = forecast.some(
 		(item) =>
 			DateTime.fromISO(item.time).toFormat('LLL dd') ===
 			dateSelected.plus({ days: 1 }).toFormat('LLL dd')
