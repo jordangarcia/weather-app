@@ -1,4 +1,3 @@
-import { round } from 'lodash'
 import type { Score, WeatherAtTimeWithPrevRainfall } from './weather'
 
 export const tempCtoF = (temp: number) => {

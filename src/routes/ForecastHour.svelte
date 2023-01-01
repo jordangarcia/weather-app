@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { round } from 'lodash'
+  import { round } from 'lodash-es'
   import { DateTime } from 'luxon'
   import {
     getCategoryEmoji,
